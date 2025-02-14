@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Stress test final mail",
+  "version": "1.0",
+  "description": "Stress test final mail from Jira issues",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "clipboardWrite",
+    "cookies",
+    "alarms",
+    "https://jira.realtek.com/*"
+  ],
+  "host_permissions": [
+    "https://jira.realtek.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  }
+} 
