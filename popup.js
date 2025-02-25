@@ -103,45 +103,31 @@ class HtmlGenerator {
 class JiraDisplayApp {
   constructor() {
     this.issuesDiv = document.getElementById('issues');
-    this.filterKeywords = document.getElementById('filterKeywords');
-    this.filterContainer = document.querySelector('.filter-container');
-    this.toggleButton = document.getElementById('toggleFilter');
-    this.items = null;  // 添加 items 屬性
+    this.filterKeywords = document.getElementById('settingsKeywords');
+    this.items = null;
     this.setupEventListeners();
   }
 
   setupEventListeners() {
-    // 載入儲存的關鍵字和顯示狀態
-    chrome.storage.local.get(['keywords', 'filterVisible'], (result) => {
+    // 載入儲存的關鍵字
+    chrome.storage.local.get(['keywords'], (result) => {
       if (result.keywords) {
         this.filterKeywords.value = result.keywords;
         this.updateDisplay();
       }
-      
-      // 設置顯示狀態
-      if (result.filterVisible) {
-        this.filterContainer.style.display = 'block';
-        this.toggleButton.textContent = '隱藏關鍵字設定';
-      } else {
-        this.toggleButton.textContent = '顯示關鍵字設定';
-      }
-    });
-    
-    // 切換顯示/隱藏
-    this.toggleButton.addEventListener('click', () => {
-      const isVisible = this.filterContainer.style.display === 'block';
-      this.filterContainer.style.display = isVisible ? 'none' : 'block';
-      this.toggleButton.textContent = isVisible ? '' : '隱藏關鍵字設定';
-      
-      // 儲存顯示狀態
-      chrome.storage.local.set({ filterVisible: !isVisible });
     });
 
-    // 監聽輸入變化，使用 debounce 避免過於頻繁的更新
+    // 監聽關鍵字輸入變化
     let timeoutId;
     this.filterKeywords.addEventListener('input', () => {
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => this.updateDisplay(), 300);
+      timeoutId = setTimeout(() => {
+        // 儲存關鍵字
+        chrome.storage.local.set({ 
+          keywords: this.filterKeywords.value 
+        });
+        this.updateDisplay();
+      }, 300);
     });
   }
 
@@ -166,9 +152,6 @@ class JiraDisplayApp {
 
   updateDisplay() {
     const keywords = this.filterKeywords.value.split('\n').map(k => k.trim()).filter(k => k);
-    
-    // 儲存關鍵字
-    chrome.storage.local.set({ keywords: this.filterKeywords.value });
     
     // 設定目標關鍵字
     const targetPhrases = CONFIG.TARGET_PHRASES;
@@ -363,4 +346,25 @@ class JiraDisplayApp {
 document.addEventListener('DOMContentLoaded', () => {
   const app = new JiraDisplayApp();
   app.init();
+});
+
+// Settings panel event listeners
+document.getElementById('settingsBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    const panel = document.getElementById('settingsPanel');
+    // 檢查當前的 display 值，如果是空字串或 'none' 就顯示面板
+    if (panel.style.display === '' || panel.style.display === 'none') {
+        panel.style.display = 'block';
+    } else {
+        panel.style.display = 'none';
+    }
+});
+
+// Close settings panel when clicking outside
+document.addEventListener('click', function(e) {
+    const panel = document.getElementById('settingsPanel');
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (!panel.contains(e.target) && e.target !== settingsBtn && !settingsBtn.contains(e.target)) {
+        panel.style.display = 'none';
+    }
 });
